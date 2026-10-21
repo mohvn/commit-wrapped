@@ -2,7 +2,6 @@
 
 import {
   CalendarRange,
-  ChartColumn,
   Check,
   ChevronDown,
   Copy,
@@ -23,7 +22,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
-import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { CARD_FORMATS, type CardFormat } from "@/lib/formats"
 import { getTheme, type ThemeId } from "@/lib/themes"
@@ -58,8 +56,6 @@ export function CardToolbar({
   onThemeChange,
   format,
   onFormatChange,
-  showStats,
-  onShowStatsChange,
   onCopyLink,
   onCopyImage,
   onDownload,
@@ -74,8 +70,6 @@ export function CardToolbar({
   onThemeChange: (id: ThemeId) => void
   format: CardFormat
   onFormatChange: (format: CardFormat) => void
-  showStats: boolean
-  onShowStatsChange: (show: boolean) => void
   onCopyLink: () => void
   onCopyImage: () => void
   onDownload: () => void
@@ -144,18 +138,6 @@ export function CardToolbar({
           )
         })}
       </ToggleGroup>
-
-      <Toggle
-        size="sm"
-        pressed={showStats}
-        onPressedChange={onShowStatsChange}
-        aria-label={showStats ? "Hide stats" : "Show stats"}
-        title={showStats ? "Hide stats" : "Show stats"}
-        className="gap-1.5 px-2.5"
-      >
-        <ChartColumn />
-        <span className="hidden md:inline">Stats</span>
-      </Toggle>
 
       <div className="ml-auto flex items-center gap-1.5">
         <Button

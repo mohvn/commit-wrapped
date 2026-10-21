@@ -44,8 +44,8 @@ const COPIED_FEEDBACK_MS = 2000
 
 function defaultYears(data: WrappedPayload): number[] {
   const current = new Date().getUTCFullYear()
-  const previous = data.years.find((year) => year.year === current - 1)
-  if (previous) return [previous.year]
+  const thisYear = data.years.find((year) => year.year === current)
+  if (thisYear) return [thisYear.year]
   const latest = data.years.at(-1)
   return latest ? [latest.year] : []
 }
@@ -58,22 +58,16 @@ function parseYearsParam(value: string | null): number[] {
     .filter((year) => Number.isInteger(year) && year > 2000)
 }
 
-function statsEnabled(value: string | null) {
-  return value !== "0" && value !== "off" && value !== "false"
-}
-
 function buildQuery({
   login,
   theme,
   years,
   format,
-  showStats,
 }: {
   login: string
   theme: ThemeId
   years: number[]
   format: CardFormat
-  showStats: boolean
 }) {
   const params = new URLSearchParams({ u: login, theme })
   if (years.length > 0) {
@@ -83,7 +77,6 @@ function buildQuery({
     )
   }
   if (format !== DEFAULT_CARD_FORMAT) params.set("format", format)
-  if (!showStats) params.set("stats", "0")
   return params.toString().replaceAll("%2C", ",")
 }
 
@@ -151,12 +144,7 @@ function CardSkeleton() {
           <Skeleton className="h-5 w-28 bg-white/8" />
         </div>
       </div>
-      <div className="mt-8 grid grid-cols-4 gap-2.5">
-        {[0, 1, 2, 3].map((tile) => (
-          <Skeleton key={tile} className="h-[74px] rounded-xl bg-white/5" />
-        ))}
-      </div>
-      <Skeleton className="mt-8 h-[110px] w-full bg-white/5" />
+      <Skeleton className="mt-10 h-[110px] w-full bg-white/5" />
     </div>
   )
 }
@@ -308,9 +296,6 @@ export function WrappedApp() {
       ? initialFormat
       : DEFAULT_CARD_FORMAT,
   )
-  const [showStats, setShowStats] = useState(() =>
-    statsEnabled(searchParams.get("stats")),
-  )
   const [loading, setLoading] = useState(Boolean(initialQuery))
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState<CopiedTarget>(null)
@@ -335,7 +320,6 @@ export function WrappedApp() {
         theme: themeId,
         years: selectedYears,
         format,
-        showStats,
       })
     : null
 
@@ -580,8 +564,6 @@ export function WrappedApp() {
                 onThemeChange={setThemeId}
                 format={format}
                 onFormatChange={setFormat}
-                showStats={showStats}
-                onShowStatsChange={setShowStats}
                 onCopyLink={() => void handleCopyLink()}
                 onCopyImage={handleCopyImage}
                 onDownload={() => void handleDownload()}
@@ -594,7 +576,7 @@ export function WrappedApp() {
                 width={frame.width}
                 height={frame.height}
                 framed={frame.height !== null}
-                frameKey={`${format}-${showStats ? "stats" : "plain"}-${visibleYears.map((year) => year.year).join("-")}`}
+                frameKey={`${format}-${visibleYears.map((year) => year.year).join("-")}`}
               >
                 <div ref={cardRef}>
                   {visibleYears.length > 0 ? (
@@ -603,7 +585,6 @@ export function WrappedApp() {
                       years={visibleYears}
                       theme={theme}
                       format={format}
-                      showStats={showStats}
                     />
                   ) : null}
                 </div>

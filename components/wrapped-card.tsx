@@ -5,9 +5,8 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react"
 
 import { ContributionGraph } from "@/components/contribution-graph"
 import { GitHubMark } from "@/components/github-mark"
-import { formatCount } from "@/lib/format"
+import { formatCount, yearsRangeLabel } from "@/lib/format"
 import { CARD_FORMATS, type CardFormat } from "@/lib/formats"
-import { computeStats, type WrappedStats, yearsRangeLabel } from "@/lib/stats"
 import type { WrappedTheme } from "@/lib/themes"
 import type { WrappedPayload, YearWrapped } from "@/lib/types"
 
@@ -38,111 +37,6 @@ function YearBlock({
         {plural(year.activeDays, "Day", "Days")}
       </p>
       <ContributionGraph days={year.days} year={year.year} theme={theme} />
-    </div>
-  )
-}
-
-function StatTile({
-  label,
-  value,
-  detail,
-  theme,
-  compact,
-}: {
-  label: string
-  value: string
-  detail?: string
-  theme: WrappedTheme
-  compact?: boolean
-}) {
-  return (
-    <div
-      className="min-w-0"
-      style={{
-        border: `1px solid ${theme.border}`,
-        background: "rgba(255,255,255,0.025)",
-        borderRadius: 12,
-        padding: compact ? "10px 12px" : "12px 14px",
-      }}
-    >
-      <p
-        className="truncate text-[10.5px] font-medium tracking-[0.08em] uppercase"
-        style={{ color: theme.muted }}
-      >
-        {label}
-      </p>
-      <p
-        className="mt-1 truncate font-semibold tracking-tight"
-        style={{ color: theme.text, fontSize: compact ? 15 : 18 }}
-      >
-        {value}
-      </p>
-      {detail ? (
-        <p
-          className="mt-0.5 truncate text-[11.5px]"
-          style={{ color: theme.dim }}
-        >
-          {detail}
-        </p>
-      ) : null}
-    </div>
-  )
-}
-
-function StatGrid({
-  stats,
-  theme,
-  columns,
-  compact,
-}: {
-  stats: WrappedStats
-  theme: WrappedTheme
-  columns: 2 | 4
-  compact?: boolean
-}) {
-  return (
-    <div
-      className="grid gap-2.5"
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-    >
-      <StatTile
-        theme={theme}
-        compact={compact}
-        label={compact ? "Streak" : "Longest streak"}
-        value={plural(stats.longestStreak, "day", "days")}
-        detail="in a row"
-      />
-      <StatTile
-        theme={theme}
-        compact={compact}
-        label="Best day"
-        value={
-          stats.bestDay ? plural(stats.bestDay.count, "commit", "commits") : "—"
-        }
-        detail={stats.bestDay?.label}
-      />
-      <StatTile
-        theme={theme}
-        compact={compact}
-        label="Top month"
-        value={stats.topMonth?.label ?? "—"}
-        detail={
-          stats.topMonth
-            ? plural(stats.topMonth.count, "commit", "commits")
-            : undefined
-        }
-      />
-      <StatTile
-        theme={theme}
-        compact={compact}
-        label="Favorite day"
-        value={stats.topWeekday?.label ?? "—"}
-        detail={
-          stats.topWeekday
-            ? plural(stats.topWeekday.count, "commit", "commits")
-            : undefined
-        }
-      />
     </div>
   )
 }
@@ -220,16 +114,12 @@ function WideCard({
   data,
   years,
   theme,
-  stats,
   shownCommits,
-  showStats,
 }: {
   data: WrappedPayload
   years: YearWrapped[]
   theme: WrappedTheme
-  stats: WrappedStats
   shownCommits: number
-  showStats: boolean
 }) {
   const { user } = data
 
@@ -299,15 +189,7 @@ function WideCard({
         </div>
       </div>
 
-      {showStats ? (
-        <div className="mt-7">
-          <StatGrid stats={stats} theme={theme} columns={4} />
-        </div>
-      ) : null}
-
-      <div
-        className={`flex w-full flex-col gap-6 ${showStats ? "mt-7" : "mt-8"}`}
-      >
+      <div className="mt-8 flex w-full flex-col gap-6">
         {years.map((year) => (
           <YearBlock key={year.year} year={year} theme={theme} />
         ))}
@@ -320,18 +202,14 @@ function PosterCard({
   data,
   years,
   theme,
-  stats,
   shownCommits,
   format,
-  showStats,
 }: {
   data: WrappedPayload
   years: YearWrapped[]
   theme: WrappedTheme
-  stats: WrappedStats
   shownCommits: number
   format: "square" | "story"
-  showStats: boolean
 }) {
   const { user } = data
   const { width, height } = CARD_FORMATS[format]
@@ -395,17 +273,6 @@ function PosterCard({
           </p>
         </div>
 
-        {showStats ? (
-          <div style={{ marginTop: story ? 28 : 18 }}>
-            <StatGrid
-              stats={stats}
-              theme={theme}
-              columns={story ? 2 : 4}
-              compact={!story}
-            />
-          </div>
-        ) : null}
-
         <div
           className="flex w-full flex-col"
           style={{ marginTop: story ? 32 : 20, gap: story ? 22 : 14 }}
@@ -440,15 +307,12 @@ export function WrappedCard({
   years,
   theme,
   format = "wide",
-  showStats = true,
 }: {
   data: WrappedPayload
   years: YearWrapped[]
   theme: WrappedTheme
   format?: CardFormat
-  showStats?: boolean
 }) {
-  const stats = computeStats(years)
   const shownCommits = years.reduce((sum, year) => sum + year.total, 0)
 
   if (format === "wide") {
@@ -457,9 +321,7 @@ export function WrappedCard({
         data={data}
         years={years}
         theme={theme}
-        stats={stats}
         shownCommits={shownCommits}
-        showStats={showStats}
       />
     )
   }
@@ -469,10 +331,8 @@ export function WrappedCard({
       data={data}
       years={years}
       theme={theme}
-      stats={stats}
       shownCommits={shownCommits}
       format={format}
-      showStats={showStats}
     />
   )
 }
